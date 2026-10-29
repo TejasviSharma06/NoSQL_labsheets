@@ -1,0 +1,387 @@
+NOSQL DATABASE DESIGN — LAB SHEET 05
+CODE FILE ONLY — Riak KV and Neo4j
+Course: BCA
+
+IMPORTANT
+- Riak examples use HTTP API calls with curl. Run them in a Linux terminal where Riak KV is installed and running.
+- Neo4j examples use Cypher in Neo4j Browser.
+- Practical 15 includes a Python driver example; install the neo4j package and configure your local connection credentials first.
+- These are separate practical sections. Do not paste every line into the same tool.
+- Riak KV editions/configurations differ. Set quorum parameters only where supported by your installed Riak version.
+- Data is sample data.
+
+============================================================
+PRACTICAL 1 — Riak KV students bucket: PUT, GET, UPDATE, DELETE
+============================================================
+# Store a student record
+curl -i -X PUT http://localhost:8098/buckets/students/keys/1 \
+  -H "Content-Type: application/json" \
+  -d '{"student_id":1,"name":"Aarav Sharma","course":"BCA","semester":5}'
+
+# Retrieve
+curl -i http://localhost:8098/buckets/students/keys/1
+
+# Update the same key
+curl -i -X PUT http://localhost:8098/buckets/students/keys/1 \
+  -H "Content-Type: application/json" \
+  -d '{"student_id":1,"name":"Aarav Sharma","course":"BCA","semester":6}'
+
+# Store more students
+curl -i -X PUT http://localhost:8098/buckets/students/keys/2 \
+  -H "Content-Type: application/json" \
+  -d '{"student_id":2,"name":"Priya Verma","course":"BCA","semester":5}'
+
+curl -i -X PUT http://localhost:8098/buckets/students/keys/3 \
+  -H "Content-Type: application/json" \
+  -d '{"student_id":3,"name":"Rahul Singh","course":"BSc","semester":3}'
+
+# Delete a record
+curl -i -X DELETE http://localhost:8098/buckets/students/keys/3
+
+============================================================
+PRACTICAL 2 — Riak KV user_sessions bucket
+============================================================
+curl -i -X PUT http://localhost:8098/buckets/user_sessions/keys/SESSION001 \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"SESSION001","user_id":"U101","login_time":"2026-10-13T09:00:00","status":"active"}'
+
+curl -i -X PUT http://localhost:8098/buckets/user_sessions/keys/SESSION002 \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"SESSION002","user_id":"U102","login_time":"2026-10-13T09:15:00","status":"active"}'
+
+curl -i http://localhost:8098/buckets/user_sessions/keys/SESSION001
+
+============================================================
+PRACTICAL 3 — Riak KV user profiles and preferences
+============================================================
+curl -i -X PUT http://localhost:8098/buckets/user_profiles/keys/U101 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Shreya","email":"shreya@example.com","city":"Roorkee","preferences":{"language":"English","theme":"dark","notifications":true}}'
+
+curl -i -X PUT http://localhost:8098/buckets/user_profiles/keys/U102 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Priya","email":"priya@example.com","city":"Dausa","preferences":{"language":"Hindi","theme":"light","notifications":false}}'
+
+curl -i http://localhost:8098/buckets/user_profiles/keys/U101
+
+============================================================
+PRACTICAL 4 — Riak KV shopping cart
+============================================================
+# Add a cart for user U101
+curl -i -X PUT http://localhost:8098/buckets/shopping_carts/keys/U101 \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"U101","items":[{"product_id":"P101","quantity":2,"price":500},{"product_id":"P102","quantity":1,"price":900}],"total":1900}'
+
+# Retrieve cart
+curl -i http://localhost:8098/buckets/shopping_carts/keys/U101
+
+# Update quantity and total by replacing the cart value
+curl -i -X PUT http://localhost:8098/buckets/shopping_carts/keys/U101 \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"U101","items":[{"product_id":"P101","quantity":3,"price":500},{"product_id":"P102","quantity":1,"price":900}],"total":2400}'
+
+# Remove P102 by writing the revised cart
+curl -i -X PUT http://localhost:8098/buckets/shopping_carts/keys/U101 \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"U101","items":[{"product_id":"P101","quantity":3,"price":500}],"total":1500}'
+
+============================================================
+PRACTICAL 5 — Riak bucket, key, and value examples
+============================================================
+# String value
+curl -i -X PUT http://localhost:8098/buckets/demo_values/keys/greeting \
+  -H "Content-Type: text/plain" \
+  -d 'Hello Riak'
+
+curl -i http://localhost:8098/buckets/demo_values/keys/greeting
+
+# JSON document
+curl -i -X PUT http://localhost:8098/buckets/demo_values/keys/student_json \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Aarav","course":"BCA"}'
+
+curl -i http://localhost:8098/buckets/demo_values/keys/student_json
+
+# List stored as JSON
+curl -i -X PUT http://localhost:8098/buckets/demo_values/keys/languages \
+  -H "Content-Type: application/json" \
+  -d '["Hindi","English","Python"]'
+
+curl -i http://localhost:8098/buckets/demo_values/keys/languages
+
+# Bucket = demo_values, key = greeting/student_json/languages, value = stored data.
+
+============================================================
+PRACTICAL 6 — Riak read/write quorum example
+============================================================
+# Riak HTTP API query parameters such as r and w are supported by many Riak KV versions.
+# The actual values must be valid for your cluster's N value.
+curl -i -X PUT 'http://localhost:8098/buckets/quorum_demo/keys/item1?w=1' \
+  -H "Content-Type: application/json" \
+  -d '{"item":"sample","quantity":10}'
+
+curl -i 'http://localhost:8098/buckets/quorum_demo/keys/item1?r=1'
+
+# Try stronger quorum values when your cluster has enough replicas:
+curl -i -X PUT 'http://localhost:8098/buckets/quorum_demo/keys/item2?w=quorum' \
+  -H "Content-Type: application/json" \
+  -d '{"item":"sample2","quantity":20}'
+
+curl -i 'http://localhost:8098/buckets/quorum_demo/keys/item2?r=quorum'
+
+# Quorum behavior depends on bucket properties and cluster size/version.
+
+============================================================
+PRACTICAL 7 — Riak scaling: multiple buckets and many records
+============================================================
+# Insert records into two buckets using a shell loop.
+for i in $(seq 1 100); do
+  curl -s -X PUT "http://localhost:8098/buckets/users/keys/user$i" \
+    -H "Content-Type: application/json" \
+    -d "{\"id\":$i,\"name\":\"User$i\",\"city\":\"Roorkee\"}" >/dev/null
+done
+
+for i in $(seq 1 100); do
+  curl -s -X PUT "http://localhost:8098/buckets/products/keys/product$i" \
+    -H "Content-Type: application/json" \
+    -d "{\"id\":$i,\"name\":\"Product$i\",\"price\":$((i*10))}" >/dev/null
+done
+
+curl -i http://localhost:8098/buckets/users/keys/user10
+curl -i http://localhost:8098/buckets/products/keys/product20
+
+# Riak distributes partitions/replicas across cluster nodes. To demonstrate scaling,
+# add nodes using your Riak deployment's cluster-join procedure and verify cluster status.
+
+============================================================
+PRACTICAL 8 — Riak transaction-like shopping operations
+============================================================
+# Riak does not provide a general multi-key ACID transaction in the traditional sense.
+# This example reads and rewrites one cart object for related cart updates.
+
+curl -i -X PUT http://localhost:8098/buckets/cart_workflow/keys/U201 \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"U201","items":[{"product_id":"P1","quantity":1,"price":200}],"total":200}'
+
+curl -i http://localhost:8098/buckets/cart_workflow/keys/U201
+
+# Update quantity and total together in the same cart value
+curl -i -X PUT http://localhost:8098/buckets/cart_workflow/keys/U201 \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"U201","items":[{"product_id":"P1","quantity":3,"price":200}],"total":600}'
+
+curl -i http://localhost:8098/buckets/cart_workflow/keys/U201
+
+============================================================
+PRACTICAL 9 — Riak query-by-data using application logic
+============================================================
+curl -i -X PUT http://localhost:8098/buckets/user_records/keys/U301 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Aarav","age":21,"city":"Roorkee","preferences":["technology","music"]}'
+
+curl -i -X PUT http://localhost:8098/buckets/user_records/keys/U302 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Priya","age":20,"city":"Dausa","preferences":["reading","music"]}'
+
+curl -i -X PUT http://localhost:8098/buckets/user_records/keys/U303 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Neha","age":22,"city":"Roorkee","preferences":["travel","technology"]}'
+
+# Retrieve records by known key; the application can parse the JSON and filter attributes.
+curl -i http://localhost:8098/buckets/user_records/keys/U301
+curl -i http://localhost:8098/buckets/user_records/keys/U302
+curl -i http://localhost:8098/buckets/user_records/keys/U303
+
+============================================================
+PRACTICAL 10 — Riak set operations (application-side Python example)
+============================================================
+# Save as riak_set_operations.py. Install requests with: pip install requests
+import requests
+
+BASE = "http://localhost:8098/buckets/user_sets/keys"
+
+def put_set(key, values):
+    response = requests.put(
+        f"{BASE}/{key}",
+        json=sorted(set(values)),
+        headers={"Content-Type": "application/json"}
+    )
+    response.raise_for_status()
+
+def get_set(key):
+    response = requests.get(f"{BASE}/{key}")
+    response.raise_for_status()
+    return set(response.json())
+
+put_set("U101", ["music", "travel", "coding"])
+put_set("U102", ["music", "reading", "coding"])
+
+set1 = get_set("U101")
+set2 = get_set("U102")
+
+# Add an element
+set1.add("sports")
+put_set("U101", set1)
+
+# Remove an element
+set1.discard("travel")
+put_set("U101", set1)
+
+# Check membership and find common elements
+print("coding in U101:", "coding" in get_set("U101"))
+print("Common interests:", get_set("U101") & get_set("U102"))
+print("U101 interests:", get_set("U101"))
+
+============================================================
+PRACTICAL 11 — Neo4j Student, Course, Department graph
+============================================================
+CREATE
+  (s1:Student {studentId: 1, name: 'Aarav'}),
+  (s2:Student {studentId: 2, name: 'Priya'}),
+  (s3:Student {studentId: 3, name: 'Rahul'}),
+  (c1:Course {name: 'BCA'}),
+  (c2:Course {name: 'BSc'}),
+  (d1:Department {name: 'Computer Science'}),
+  (d2:Department {name: 'Science'}),
+  (s1)-[:ENROLLED_IN]->(c1),
+  (s2)-[:ENROLLED_IN]->(c1),
+  (s3)-[:ENROLLED_IN]->(c2),
+  (c1)-[:OFFERED_BY]->(d1),
+  (c2)-[:OFFERED_BY]->(d2);
+
+MATCH (s:Student)-[r]->(n) RETURN s, r, n;
+
+============================================================
+PRACTICAL 12 — Neo4j social network
+============================================================
+CREATE
+  (p1:Person {name: 'Aarav'}),
+  (p2:Person {name: 'Priya'}),
+  (p3:Person {name: 'Neha'}),
+  (p4:Person {name: 'Rahul'}),
+  (p1)-[:FRIENDS_WITH]->(p2),
+  (p1)-[:FOLLOWS]->(p3),
+  (p2)-[:FOLLOWS]->(p1),
+  (p4)-[:FRIENDS_WITH]->(p1),
+  (p3)-[:WORKS_AT]->(:Company {name: 'Tech Solutions'});
+
+# Find Aarav's friends
+MATCH (:Person {name: 'Aarav'})-[:FRIENDS_WITH]-(friend:Person)
+RETURN DISTINCT friend.name;
+
+# Find people who follow Aarav
+MATCH (follower:Person)-[:FOLLOWS]->(:Person {name: 'Aarav'})
+RETURN follower.name;
+
+# Find people Aarav follows
+MATCH (:Person {name: 'Aarav'})-[:FOLLOWS]->(person:Person)
+RETURN person.name;
+
+============================================================
+PRACTICAL 13 — Neo4j shopping / e-commerce graph
+============================================================
+CREATE
+  (c1:Customer {customerId: 1, name: 'Aarav'}),
+  (c2:Customer {customerId: 2, name: 'Priya'}),
+  (p1:Product {productId: 'P101', name: 'Mouse', price: 500}),
+  (p2:Product {productId: 'P102', name: 'Keyboard', price: 900}),
+  (cat:Category {name: 'Computer Accessories'}),
+  (o1:Order {orderId: 1001, date: '2026-10-01'}),
+  (o2:Order {orderId: 1002, date: '2026-10-02'}),
+  (c1)-[:PLACED]->(o1),
+  (c2)-[:PLACED]->(o2),
+  (o1)-[:CONTAINS {quantity: 2}]->(p1),
+  (o1)-[:CONTAINS {quantity: 1}]->(p2),
+  (o2)-[:CONTAINS {quantity: 1}]->(p2),
+  (p1)-[:IN_CATEGORY]->(cat),
+  (p2)-[:IN_CATEGORY]->(cat);
+
+# Products purchased by Aarav
+MATCH (:Customer {name: 'Aarav'})-[:PLACED]->(:Order)-[:CONTAINS]->(p:Product)
+RETURN DISTINCT p.name, p.price;
+
+# Customers who purchased Keyboard
+MATCH (c:Customer)-[:PLACED]->(:Order)-[:CONTAINS]->(:Product {name: 'Keyboard'})
+RETURN DISTINCT c.name;
+
+============================================================
+PRACTICAL 14 — Neo4j transaction / consistency example
+============================================================
+# In Neo4j Browser, run the following statements separately.
+# Each write query runs transactionally. Use an explicit driver transaction
+# for multiple statements that must succeed or fail together.
+
+CREATE (:Product {productId: 'P201', name: 'Notebook', stock: 20});
+MATCH (p:Product {productId: 'P201'})
+SET p.stock = p.stock - 2
+RETURN p;
+
+MATCH (p:Product {productId: 'P201'})
+SET p.status = 'available'
+RETURN p;
+
+MATCH (p:Product {productId: 'P201'})
+RETURN p;
+
+# Delete the sample product when finished
+MATCH (p:Product {productId: 'P201'})
+DELETE p;
+
+============================================================
+PRACTICAL 15 — Neo4j CRUD application using Python
+============================================================
+# Save this section as neo4j_crud.py.
+# Install: pip install neo4j
+# Set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD for your own database.
+
+import os
+from neo4j import GraphDatabase
+
+URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
+PASSWORD = os.getenv("NEO4J_PASSWORD", "change_this_password")
+
+driver = GraphDatabase.driver(URI, auth=(USERNAME, PASSWORD))
+
+def create_student(tx, student_id, name, course):
+    tx.run(
+        """
+        MERGE (s:Student {studentId: $student_id})
+        SET s.name = $name, s.course = $course
+        """,
+        student_id=student_id, name=name, course=course
+    )
+
+def get_students(tx):
+    result = tx.run(
+        "MATCH (s:Student) RETURN s.studentId AS id, s.name AS name, s.course AS course ORDER BY id"
+    )
+    return [record.data() for record in result]
+
+def update_student(tx, student_id, name):
+    tx.run(
+        "MATCH (s:Student {studentId: $student_id}) SET s.name = $name",
+        student_id=student_id, name=name
+    )
+
+def delete_student(tx, student_id):
+    tx.run(
+        "MATCH (s:Student {studentId: $student_id}) DETACH DELETE s",
+        student_id=student_id
+    )
+
+try:
+    with driver.session() as session:
+        session.execute_write(create_student, 1, "Aarav", "BCA")
+        session.execute_write(create_student, 2, "Priya", "BCA")
+        print("Students:", session.execute_read(get_students))
+        session.execute_write(update_student, 1, "Aarav Sharma")
+        print("After update:", session.execute_read(get_students))
+        # Uncomment to delete student 2:
+        # session.execute_write(delete_student, 2)
+finally:
+    driver.close()
+
+# Graph databases make relationship traversal natural using nodes and edges.
+# Neo4j transactions provide ACID guarantees for committed graph updates.
+# Scaling and availability depend on the selected Neo4j edition and cluster setup.

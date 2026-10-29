@@ -1,0 +1,265 @@
+// NOSQL DATABASE DESIGN — LAB SHEET 03
+// MongoDB Shell (mongosh) code for 15 practicals.
+// Run each practical section separately in mongosh.
+// MongoDB transactions require a replica set or sharded cluster.
+// Sample data only.
+
+use NoSQLLabSheet3
+
+// ------------------------------------------------------------
+// PRACTICAL 1: Student Activity Tracking System
+// ------------------------------------------------------------
+db.StudentActivities.insertMany([
+  { studentId: 1, name: "Aarav Sharma", courses: ["BCA", "DBMS"], attendance: 90, skills: ["Python", "MongoDB"], activities: [{ type: "login", date: ISODate("2026-09-01") }, { type: "assignment", date: ISODate("2026-09-02") }] },
+  { studentId: 2, name: "Priya Verma", courses: ["BCA", "Java"], attendance: 75, skills: ["Java", "HTML"], activities: [{ type: "login", date: ISODate("2026-09-03") }] },
+  { studentId: 3, name: "Rahul Singh", courses: ["BSc", "DBMS"], attendance: 60, skills: ["SQL"], activities: [{ type: "assignment", date: ISODate("2026-09-04") }] },
+  { studentId: 4, name: "Neha Gupta", courses: ["BCA"], attendance: 95, skills: ["Python", "CSS"], activities: [{ type: "project", date: ISODate("2026-09-05") }] },
+  { studentId: 5, name: "Kabir Mehta", courses: ["BCom"], attendance: 82, skills: ["Excel"], activities: [{ type: "login", date: ISODate("2026-09-06") }] }
+]);
+db.StudentActivities.find({ attendance: { $gte: 80 } });
+db.StudentActivities.find({ activities: { $elemMatch: { type: "assignment" } } });
+db.StudentActivities.find({ skills: "Python" });
+db.StudentActivities.find({ courses: "BCA" });
+
+// ------------------------------------------------------------
+// PRACTICAL 2: Event Logging System
+// ------------------------------------------------------------
+db.EventLogs.insertMany([
+  { userId: "u01", event: "login", time: ISODate("2026-10-01T09:00:00Z") },
+  { userId: "u01", event: "failed-login", time: ISODate("2026-10-01T09:02:00Z") },
+  { userId: "u01", event: "failed-login", time: ISODate("2026-10-01T09:03:00Z") },
+  { userId: "u02", event: "logout", time: ISODate("2026-10-01T10:00:00Z") },
+  { userId: "u03", event: "file-upload", time: ISODate("2026-10-01T10:05:00Z") },
+  { userId: "u02", event: "password-change", time: ISODate("2026-10-01T10:10:00Z") },
+  { userId: "u01", event: "failed-login", time: ISODate("2026-10-01T09:04:00Z") }
+]);
+db.EventLogs.find({ event: "failed-login" });
+db.EventLogs.aggregate([
+  { $match: { event: "failed-login" } },
+  { $group: { _id: "$userId", failedAttempts: { $sum: 1 } } },
+  { $match: { failedAttempts: { $gte: 3 } } }
+]);
+db.EventLogs.aggregate([
+  { $group: { _id: "$event", total: { $sum: 1 } } },
+  { $sort: { total: -1 } }
+]);
+
+// ------------------------------------------------------------
+// PRACTICAL 3: Mini Blogging Platform
+// ------------------------------------------------------------
+db.Blogs.insertMany([
+  { title: "Learning MongoDB", author: "Aarav", category: "Technology", tags: ["database", "mongodb"], comments: [{ user: "Priya", text: "Helpful!" }], published: true, publishedAt: ISODate("2026-08-10") },
+  { title: "Campus Life", author: "Priya", category: "Education", tags: ["college", "life"], comments: [], published: true, publishedAt: ISODate("2026-08-11") },
+  { title: "Python Basics", author: "Neha", category: "Technology", tags: ["python", "programming"], comments: [{ user: "Kabir", text: "Nice post" }], published: false },
+  { title: "Study Tips", author: "Rahul", category: "Education", tags: ["study", "college"], comments: [], published: true, publishedAt: ISODate("2026-08-12") }
+]);
+db.Blogs.find({ tags: "mongodb" });
+db.Blogs.find({ category: "Technology", tags: "python" });
+db.Blogs.find({ category: "Education", published: true });
+
+// ------------------------------------------------------------
+// PRACTICAL 4: Flexible Product Catalog
+// ------------------------------------------------------------
+db.Products.insertMany([
+  { name: "Laptop A", category: "laptop", brand: "HP", ramGB: 16, storageGB: 512, processor: "i5" },
+  { name: "Mobile A", category: "mobile", brand: "Samsung", storageGB: 256, cameraMP: 50, batteryMah: 5000 },
+  { name: "Camera A", category: "camera", brand: "Canon", sensorMP: 24, lensMount: "RF" },
+  { name: "Laptop B", category: "laptop", brand: "Dell", ramGB: 8, storageGB: 256, processor: "i3" },
+  { name: "Mobile B", category: "mobile", brand: "OnePlus", storageGB: 128, cameraMP: 48, batteryMah: 4500 }
+]);
+db.Products.find({ category: "laptop", ramGB: { $gte: 8 } });
+db.Products.find({ category: "mobile", cameraMP: { $gte: 48 } });
+db.Products.find({ category: "camera", sensorMP: { $gte: 20 } });
+
+// ------------------------------------------------------------
+// PRACTICAL 5: E-Commerce Order Management
+// ------------------------------------------------------------
+db.Customers.insertMany([
+  { customerId: 1, name: "Aarav" }, { customerId: 2, name: "Priya" }, { customerId: 3, name: "Neha" }
+]);
+db.StoreProducts.insertMany([
+  { productId: 101, name: "Mouse", price: 500 }, { productId: 102, name: "Keyboard", price: 900 },
+  { productId: 103, name: "Headphones", price: 1200 }
+]);
+db.Orders.insertMany([
+  { orderId: 1001, customerId: 1, date: ISODate("2026-09-10"), items: [{ product: "Mouse", price: 500, qty: 2 }, { product: "Keyboard", price: 900, qty: 1 }] },
+  { orderId: 1002, customerId: 2, date: ISODate("2026-09-11"), items: [{ product: "Headphones", price: 1200, qty: 1 }] },
+  { orderId: 1003, customerId: 1, date: ISODate("2026-09-12"), items: [{ product: "Mouse", price: 500, qty: 1 }] }
+]);
+db.Orders.find({ customerId: 1 });
+db.Orders.aggregate([
+  { $unwind: "$items" },
+  { $group: { _id: "$orderId", customerId: { $first: "$customerId" }, total: { $sum: { $multiply: ["$items.price", "$items.qty"] } } } },
+  { $sort: { _id: 1 } }
+]);
+
+// ------------------------------------------------------------
+// PRACTICAL 6: Website Analytics
+// ------------------------------------------------------------
+db.PageVisits.insertMany([
+  { page: "/home", userId: "u1", device: "mobile", browser: "Chrome", location: "India", timestamp: ISODate("2026-10-01T08:00:00Z") },
+  { page: "/products", userId: "u2", device: "desktop", browser: "Edge", location: "India", timestamp: ISODate("2026-10-01T08:05:00Z") },
+  { page: "/home", userId: "u3", device: "mobile", browser: "Chrome", location: "India", timestamp: ISODate("2026-10-01T08:10:00Z") },
+  { page: "/about", userId: "u1", device: "tablet", browser: "Safari", location: "India", timestamp: ISODate("2026-10-01T08:15:00Z") },
+  { page: "/home", userId: "u4", device: "desktop", browser: "Chrome", location: "India", timestamp: ISODate("2026-10-01T08:20:00Z") }
+]);
+db.PageVisits.aggregate([{ $group: { _id: "$page", visits: { $sum: 1 } } }, { $sort: { visits: -1 } }]);
+db.PageVisits.aggregate([{ $group: { _id: "$device", visits: { $sum: 1 } } }, { $sort: { visits: -1 } }]);
+
+// ------------------------------------------------------------
+// PRACTICAL 7: Content Management System
+// ------------------------------------------------------------
+db.Articles.insertMany([
+  { title: "MongoDB Guide", author: "Aarav", category: "Technology", tags: ["database"], status: "published", publishedAt: ISODate("2026-09-01") },
+  { title: "College News", author: "Priya", category: "Education", tags: ["college"], status: "published", publishedAt: ISODate("2026-09-02") },
+  { title: "Draft Tutorial", author: "Neha", category: "Technology", tags: ["tutorial"], status: "draft" }
+]);
+db.Articles.find({ status: "published" });
+db.Articles.find({ status: "draft" });
+db.Articles.find({ category: "Technology", status: "published" });
+db.Articles.find({ tags: "college" });
+
+// ------------------------------------------------------------
+// PRACTICAL 8: Embedded Shopping Cart
+// ------------------------------------------------------------
+db.Carts.insertOne({
+  userId: "u01",
+  items: [
+    { productId: 101, name: "Mouse", price: 500, quantity: 2 },
+    { productId: 102, name: "Keyboard", price: 900, quantity: 1 }
+  ]
+});
+db.Carts.findOne({ userId: "u01" });
+// Add a product
+db.Carts.updateOne({ userId: "u01" }, { $push: { items: { productId: 103, name: "Headphones", price: 1200, quantity: 1 } } });
+// Change quantity
+db.Carts.updateOne({ userId: "u01", "items.productId": 101 }, { $set: { "items.$.quantity": 3 } });
+// Remove a product
+db.Carts.updateOne({ userId: "u01" }, { $pull: { items: { productId: 102 } } });
+// Calculate cart value
+db.Carts.aggregate([
+  { $match: { userId: "u01" } }, { $unwind: "$items" },
+  { $group: { _id: "$userId", cartValue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } } } }
+]);
+
+// ------------------------------------------------------------
+// PRACTICAL 9: Product Reviews and Ratings
+// ------------------------------------------------------------
+db.Reviews.insertMany([
+  { productId: 101, customer: "Aarav", rating: 5, review: "Excellent" },
+  { productId: 101, customer: "Priya", rating: 4, review: "Good" },
+  { productId: 102, customer: "Neha", rating: 5, review: "Very good" },
+  { productId: 102, customer: "Rahul", rating: 3, review: "Average" },
+  { productId: 101, customer: "Kabir", rating: 4, review: "Useful" }
+]);
+db.Reviews.aggregate([
+  { $group: { _id: "$productId", averageRating: { $avg: "$rating" }, numberOfReviews: { $sum: 1 } } },
+  { $sort: { _id: 1 } }
+]);
+
+// ------------------------------------------------------------
+// PRACTICAL 10: Inventory Monitoring
+// ------------------------------------------------------------
+db.Inventory.insertMany([
+  { productId: 1, name: "Mouse", stock: 5, minimumStock: 10, supplier: "Tech Supply", restockDate: ISODate("2026-10-15") },
+  { productId: 2, name: "Keyboard", stock: 20, minimumStock: 8, supplier: "Input World", restockDate: ISODate("2026-10-20") },
+  { productId: 3, name: "Monitor", stock: 2, minimumStock: 5, supplier: "Display Hub", restockDate: ISODate("2026-10-14") }
+]);
+db.Inventory.find({ $expr: { $lte: ["$stock", "$minimumStock"] } });
+db.Inventory.find({ stock: { $lte: 5 } });
+
+// ------------------------------------------------------------
+// PRACTICAL 11: Bank Wallet Transfer using MongoDB transaction
+// Requires a replica set/sharded cluster, not standalone MongoDB.
+// ------------------------------------------------------------
+db.Wallets.insertMany([
+  { userId: "userA", balance: 5000 },
+  { userId: "userB", balance: 2500 }
+]);
+
+// Run in mongosh. Transaction example:
+const session = db.getMongo().startSession();
+const txdb = session.getDatabase("NoSQLLabSheet3");
+try {
+  session.startTransaction();
+  const debit = txdb.Wallets.updateOne(
+    { userId: "userA", balance: { $gte: 500 } },
+    { $inc: { balance: -500 } }
+  );
+  if (debit.modifiedCount !== 1) throw new Error("Insufficient balance or sender missing");
+  const credit = txdb.Wallets.updateOne(
+    { userId: "userB" },
+    { $inc: { balance: 500 } }
+  );
+  if (credit.modifiedCount !== 1) throw new Error("Receiver missing");
+  session.commitTransaction();
+  print("Transfer successful");
+} catch (e) {
+  session.abortTransaction();
+  print("Transfer failed: " + e.message);
+} finally {
+  session.endSession();
+}
+db.Wallets.find();
+
+// ------------------------------------------------------------
+// PRACTICAL 12: User Notification System
+// ------------------------------------------------------------
+db.Notifications.insertMany([
+  { userId: "u01", type: "message", text: "New message", read: false, createdAt: new Date() },
+  { userId: "u01", type: "order-update", text: "Order shipped", read: false, createdAt: new Date() },
+  { userId: "u02", type: "system-alert", text: "Maintenance tonight", read: true, createdAt: new Date() },
+  { userId: "u01", type: "message", text: "Welcome", read: true, createdAt: new Date() }
+]);
+db.Notifications.find({ userId: "u01", read: false });
+db.Notifications.updateMany({ userId: "u01", read: false }, { $set: { read: true, viewedAt: new Date() } });
+db.Notifications.find({ userId: "u01" });
+
+// ------------------------------------------------------------
+// PRACTICAL 13: Course Learning Platform
+// ------------------------------------------------------------
+db.LearningProgress.insertMany([
+  { studentId: 1, student: "Aarav", course: "MongoDB", instructor: "Dr. Sharma", modules: [{ name: "Basics", completed: true }, { name: "Queries", completed: true }, { name: "Aggregation", completed: false }] },
+  { studentId: 2, student: "Priya", course: "MongoDB", instructor: "Dr. Sharma", modules: [{ name: "Basics", completed: true }, { name: "Queries", completed: true }, { name: "Aggregation", completed: true }] },
+  { studentId: 3, student: "Rahul", course: "Python", instructor: "Ms. Verma", modules: [{ name: "Basics", completed: true }, { name: "Functions", completed: false }] }
+]);
+db.LearningProgress.find({ course: "MongoDB" });
+db.LearningProgress.aggregate([
+  { $project: { student: 1, course: 1, totalModules: { $size: "$modules" }, completedModules: { $size: { $filter: { input: "$modules", as: "m", cond: { $eq: ["$$m.completed", true] } } } } } },
+  { $addFields: { progressPercent: { $multiply: [{ $divide: ["$completedModules", "$totalModules"] }, 100] } } },
+  { $sort: { progressPercent: -1 } }
+]);
+db.LearningProgress.find({ modules: { $not: { $elemMatch: { completed: false } } });
+
+// ------------------------------------------------------------
+// PRACTICAL 14: Real-Time Order Tracking with status history
+// ------------------------------------------------------------
+db.TrackedOrders.insertMany([
+  { orderId: 5001, customer: "Aarav", currentStatus: "Shipped", statusHistory: [{ status: "Placed", at: ISODate("2026-10-10T09:00:00Z") }, { status: "Confirmed", at: ISODate("2026-10-10T09:10:00Z") }, { status: "Shipped", at: ISODate("2026-10-11T08:00:00Z") }] },
+  { orderId: 5002, customer: "Priya", currentStatus: "Delivered", statusHistory: [{ status: "Placed", at: ISODate("2026-10-08T09:00:00Z") }, { status: "Confirmed", at: ISODate("2026-10-08T10:00:00Z") }, { status: "Shipped", at: ISODate("2026-10-09T08:00:00Z") }, { status: "Delivered", at: ISODate("2026-10-10T12:00:00Z") }] }
+]);
+db.TrackedOrders.findOne({ orderId: 5001 });
+// Append a new status and update current status
+db.TrackedOrders.updateOne(
+  { orderId: 5001 },
+  { $set: { currentStatus: "Delivered" }, $push: { statusHistory: { status: "Delivered", at: new Date() } } }
+);
+db.TrackedOrders.find({ currentStatus: "Delivered" });
+
+// ------------------------------------------------------------
+// PRACTICAL 15: Flexible News Database
+// ------------------------------------------------------------
+db.NewsArticles.insertMany([
+  { title: "New Technology Centre", author: "Aarav", location: "Roorkee", category: "Technology", tags: ["education", "technology"], images: ["tech.jpg"], sources: ["Campus News"], published: true },
+  { title: "City Weather Update", location: "Dausa", category: "Local", tags: ["weather"], sources: ["Local News"], published: true },
+  { title: "Sports Competition", author: "Priya", category: "Sports", tags: ["college", "sports"], images: ["sports.jpg"], published: false },
+  { title: "Database Workshop", author: "Neha", category: "Technology", tags: ["database", "workshop"], sources: ["COER"], published: true }
+]);
+db.NewsArticles.find({ category: "Technology" });
+db.NewsArticles.find({ tags: "college" });
+db.NewsArticles.find({ location: "Dausa", published: true });
+db.NewsArticles.find({ author: { $exists: true } });
+db.NewsArticles.find({ images: { $exists: true, $ne: [] } });
+db.NewsArticles.find({ published: true, $or: [{ category: "Technology" }, { tags: "weather" }] });
+
+// End of Lab Sheet 03

@@ -1,0 +1,142 @@
+ASSIGNMENT – UNIT 4: NoSQL DATABASE
+Course: BCA | Subject: NoSQL Database Design
+
+Q1. Explain the concept of Column-Oriented NoSQL Databases. How does the column-family model differ from the traditional relational table model? Discuss the advantages and limitations of using column-oriented databases for large-scale applications.
+Answer:
+Column-family NoSQL databases store data in rows identified by keys, with columns grouped into column families. Different rows may contain different columns, so the model supports sparse and changing data. A relational database normally uses tables with a predefined set of columns.
+Advantages include horizontal scalability, distributed storage, high write throughput, and efficient access to selected data. Limitations include fewer general-purpose joins, query-driven data modeling, and operational complexity. Examples are Apache HBase and Apache Cassandra.
+
+Q2. Compare Apache HBase and Apache Cassandra with respect to data model, architecture, consistency, availability, scalability, fault tolerance, query processing, and suitable applications. Which one would you choose for a highly distributed application and why?
+Answer:
+HBase is a column-family database integrated with Hadoop and HDFS. It uses HMaster and RegionServers and provides strong consistency for row-level operations. It is suitable for very large tables and Hadoop-oriented workloads.
+Cassandra uses a peer-to-peer architecture without a single master. It replicates data across nodes and supports tunable consistency levels through CQL. It is suited to high availability, high write volume, and multi-data-centre deployments.
+Both scale horizontally and tolerate failures. For a highly distributed application that needs availability across locations, I would choose Cassandra, provided its query and consistency requirements match the application. HBase may be preferable when Hadoop integration and its row-level consistency model are central requirements.
+
+Q3. Explain the architecture of Apache HBase in detail. Describe the roles and interactions of HMaster, RegionServer, ZooKeeper, HDFS, Regions, and MemStore during read and write operations. Draw a suitable architecture diagram.
+Answer:
+HMaster manages table administration and region assignment. RegionServers handle client reads and writes for their regions. ZooKeeper supports cluster coordination and server-state tracking. HDFS stores persistent data. A table is divided into regions by row-key ranges. MemStore holds recent writes in memory before they are flushed to HFiles in HDFS.
+Architecture diagram:
+                 [Client]
+                    |
+           [ZooKeeper / Metadata]
+                    |
+           [HMaster: Coordination]
+                    |
+          -------------------------
+          |                       |
+   [RegionServer 1]        [RegionServer 2]
+    [Region + MemStore]     [Region + MemStore]
+          |                       |
+          -----------[HDFS]--------
+                  [HFiles]
+Write operation: the client locates the relevant region and sends the update to its RegionServer. The write is recorded in the write-ahead log and MemStore; MemStore is later flushed to HFiles in HDFS.
+Read operation: the RegionServer checks relevant in-memory and persistent data sources and returns the latest applicable value. HMaster mainly manages the cluster rather than directly serving every data request.
+
+Q4. Explain the Column-Family Data Store model with the help of a suitable example. Discuss concepts such as row key, column family, column qualifier, cell, timestamp, and versioning. How is this model different from rows and columns in an RDBMS?
+Answer:
+A row key uniquely identifies a row. A column family groups related columns, and a column qualifier identifies a column within that family. A cell is the value at a row-key/family/qualifier combination. Timestamps can identify cell versions, and configured versioning can retain multiple values.
+Example:
+Row key: student101
+- profile:name = "Shreya"
+- profile:course = "BCA"
+- activity:lab01 = "submitted"
+- activity:login_2026_10_13 = "09:00"
+Different rows can have different qualifiers. In a relational table, columns are usually defined in advance for all rows; column-family stores are more flexible for sparse or evolving attributes.
+
+Q5. A university needs to store billions of student activity records, where different students may have different attributes. Design a suitable HBase data model for this application and justify your choice of row key and column families.
+Answer:
+Create an HBase table named StudentActivity. A possible row key is:
+timeBucket#salt#studentId#eventId
+Example: 2026-10#07#student101#event00045
+Column families:
+- profile: name, course, semester, department
+- activity: activityType, labId, resource
+- metrics: duration, score, status
+The time bucket supports time-range access. A salt/hash spreads writes across regions and reduces hotspots. The row key should be selected based on the queries required; a timestamp alone at the start of the key may concentrate writes. Store attributes that are needed by common access patterns.
+
+Q6. Discuss consistency and transactions in HBase and Cassandra. Why do distributed NoSQL databases often make different trade-offs from traditional ACID-based relational databases? Explain how consistency can affect application design.
+Answer:
+HBase provides strong consistency for row-level operations, while multi-row ACID transactions are not its usual standard model. Cassandra offers tunable consistency, allowing applications to choose read and write consistency levels. Cassandra also supports lightweight transactions for certain conditional updates, but these do not replace arbitrary multi-row ACID transactions.
+Distributed databases balance consistency, availability, latency, and partition tolerance according to their designs. Applications must decide whether stale reads are acceptable. A view counter may tolerate eventual consistency, while payment or inventory updates may need stronger coordination and careful retry handling.
+
+Q7. Availability and fault tolerance are important characteristics of distributed databases. Explain how Apache Cassandra achieves high availability using its distributed architecture. Discuss the role of replication and consistency levels in maintaining availability.
+Answer:
+Cassandra uses a peer-to-peer architecture, so there is no single master node required for every request. Data is partitioned and replicated to multiple nodes. If one node fails, other replicas can serve requests.
+Consistency levels such as ONE, QUORUM, and ALL specify how many replicas must respond. Lower levels can improve availability and reduce latency but may return less up-to-date data. Higher levels require more replica responses and may fail if too many replicas are unavailable. Replication strategy, rack awareness, repair, and monitoring also improve fault tolerance.
+
+Q8. Explain the major query features of HBase and Cassandra. Compare HBase operations with Cassandra's CQL (Cassandra Query Language). Why is query design and data modeling particularly important in column-family databases?
+Answer:
+HBase provides Get, Put, Delete, Scan, and Increment operations through APIs or its shell. It is mainly accessed using row keys and row-key ranges; general SQL-style queries on arbitrary fields are not its primary model.
+Cassandra provides CQL, a SQL-like language with SELECT, INSERT, UPDATE, and DELETE. Queries should normally use the partition key and clustering columns; arbitrary filtering can be limited or expensive.
+Data modeling is query-driven in both databases. Good keys enable efficient access and balanced distribution. Poor key choices can cause hotspots, large scans, or unbalanced partitions.
+
+Q9. Scaling is one of the major reasons for using NoSQL databases. Explain how HBase and Cassandra scale when data and user requests increase. Compare horizontal scaling, partitioning, replication, and load distribution in both systems.
+Answer:
+Both databases scale horizontally by adding nodes. HBase divides tables into regions and distributes regions among RegionServers; HDFS stores data across storage nodes. Regions can split and be reassigned as data grows.
+Cassandra partitions rows using a partitioner and distributes replicas according to its replication strategy. Adding nodes can redistribute token ranges and data. Its peer-to-peer design spreads requests across nodes.
+HBase is closely integrated with Hadoop/HDFS, while Cassandra emphasizes peer-to-peer availability and configurable replication. Both require balanced keys, monitoring, and capacity planning.
+
+Q10. An organization wants to build a real-time event logging system that generates millions of events per minute. Explain why a column-oriented NoSQL database may be suitable for this application. Design a conceptual data model and discuss the required consistency, availability, and scaling strategy.
+Answer:
+A column-family database can distribute high-volume writes across nodes and store varying event attributes.
+Example Cassandra table:
+CREATE TABLE events_by_service_day (
+  service text,
+  event_day date,
+  event_time timestamp,
+  event_id uuid,
+  event_type text,
+  user_id text,
+  status text,
+  details map<text,text>,
+  PRIMARY KEY ((service, event_day), event_time, event_id)
+) WITH CLUSTERING ORDER BY (event_time DESC);
+This is a conceptual starting point. Monitor partition size and use smaller time buckets if necessary. Replicate data across failure zones and choose suitable consistency levels, such as LOCAL_QUORUM when appropriate. Event analysis may tolerate bounded staleness, while audit data may require stronger durability and access controls.
+
+Q11. Content Management Systems (CMS) and Blogging Platforms often contain articles, authors, tags, comments, metadata, and user activity. Explain how a column-family database can be used to design such systems. Discuss the challenges of handling varying and evolving data structures.
+Answer:
+A column-family database can store articles by article ID and create separate tables for articles by author or comments by article. Example conceptual tables:
+- articles_by_id(article_id, title, author_id, body, published_at)
+- articles_by_author(author_id, published_at, article_id, title)
+- comments_by_article(article_id, created_at, comment_id, user_id, text)
+Separate tables are designed for expected query patterns. This supports distributed storage and high throughput, but data may need duplication across tables. Schema evolution, updates to duplicated data, and very large comment partitions must be managed carefully.
+
+Q12. Counters are frequently used in distributed applications for tracking page views, likes, downloads, API requests, and user activity. Explain how counters can be implemented in Cassandra. What problems can occur when counters are updated concurrently in a distributed environment?
+Answer:
+Cassandra supports counter columns for incrementing or decrementing totals. Example:
+CREATE TABLE page_views (
+  page_id text PRIMARY KEY,
+  views counter
+);
+Increment:
+UPDATE page_views SET views = views + 1 WHERE page_id = 'home';
+Counter tables have restrictions and counter updates are not idempotent like ordinary assignments. If a client retries after a timeout, it may be unclear whether the first increment succeeded, which can lead to uncertain totals. For billing-critical counts, consider storing events and calculating totals with a controlled aggregation process.
+
+Q13. Explain the concept of expiring data (TTL – Time To Live) in Cassandra/HBase. Consider a system that stores temporary user sessions and automatically removes them after 24 hours. Explain how TTL can be useful and discuss its impact on storage management and application design.
+Answer:
+TTL defines how long data remains valid. Cassandra can use TTL 86400 for 24 hours:
+CREATE TABLE user_sessions (
+  session_id text PRIMARY KEY,
+  user_id text,
+  last_seen timestamp,
+  status text
+);
+INSERT INTO user_sessions (session_id, user_id, last_seen, status)
+VALUES ('S101', 'U101', toTimestamp(now()), 'active')
+USING TTL 86400;
+In HBase, TTL can be configured for a column family. TTL reduces the need for application-side deletion, but expired data may not be physically removed immediately. Applications should handle missing sessions and choose retention periods carefully.
+
+Q14. A company is developing a real-time analytics platform that must handle high write volume, large datasets, geographically distributed users, and occasional node failures. Compare HBase and Cassandra for this scenario and recommend one database. Justify your answer using architecture, consistency, availability, scalability, and query requirements.
+Answer:
+HBase suits very large tables, Hadoop integration, row-level strong consistency, and workloads using HDFS and batch processing. It may be a good fit where the Hadoop ecosystem is already in use.
+Cassandra uses a peer-to-peer architecture, supports multi-data-centre replication and tunable consistency, and is designed for high write throughput and availability during node failures.
+For a geographically distributed real-time analytics platform with high write volume and a strong availability requirement, I recommend Cassandra if the queries can be modeled around partition keys. If tight Hadoop integration is the primary need, HBase may be preferable.
+
+Q15. “Column-oriented NoSQL databases provide scalability and flexibility, but they require careful data modeling.” Critically analyze this statement using HBase and Cassandra as examples. Discuss how poor choices of partition keys, row keys, column families, replication, and query patterns can negatively affect system performance.
+Answer:
+The statement is correct because distributed database performance depends strongly on key and access-pattern design.
+- Poor HBase row keys can concentrate writes in one region and create hotspots. Poor region distribution or unnecessary column families can affect performance and storage behavior.
+- Poor Cassandra partition keys can create oversized partitions or send too many requests to a few nodes. Queries that do not match the partition key may require inefficient filtering or duplicated tables.
+- Too little replication reduces fault tolerance; too much replication increases storage and write costs. Inappropriate consistency levels can cause avoidable latency or stale results.
+- Poor query planning can require scans or many extra requests.
+Good design begins with expected queries, balanced keys, suitable partition sizes, deliberate replication and consistency choices, and monitoring as data grows.

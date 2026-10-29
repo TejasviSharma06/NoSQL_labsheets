@@ -1,0 +1,409 @@
+NOSQL DATABASE DESIGN — LAB SHEET 04
+CODE FILE ONLY — HBase and Cassandra commands
+Course: BCA
+
+IMPORTANT
+- Run HBase commands in HBase Shell.
+- Run Cassandra commands in cqlsh, except nodetool commands which run in a terminal.
+- These are separate practical sections; do not paste the entire file into one shell.
+- Start and configure the relevant database service before running commands.
+- Practical 10 requires a multi-region HBase setup; creating split keys alone does not prove region distribution.
+- Practical 14 requires a Cassandra cluster with replication factor suitable for ONE, QUORUM, and ALL.
+- Commands that delete records are included as requested by the lab sheet.
+
+============================================================
+PRACTICAL 1 — HBase Student table
+============================================================
+[HBase Shell]
+
+create 'Student', 'personal', 'academic'
+
+put 'Student', '1', 'personal:name', 'Aarav Sharma'
+put 'Student', '1', 'personal:course', 'BCA'
+put 'Student', '1', 'academic:semester', '5'
+put 'Student', '1', 'academic:marks', '86'
+
+put 'Student', '2', 'personal:name', 'Priya Verma'
+put 'Student', '2', 'personal:course', 'BCA'
+put 'Student', '2', 'academic:semester', '5'
+put 'Student', '2', 'academic:marks', '91'
+
+put 'Student', '3', 'personal:name', 'Rahul Singh'
+put 'Student', '3', 'personal:course', 'BSc'
+put 'Student', '3', 'academic:semester', '3'
+put 'Student', '3', 'academic:marks', '78'
+
+put 'Student', '4', 'personal:name', 'Neha Gupta'
+put 'Student', '4', 'personal:course', 'BCA'
+put 'Student', '4', 'academic:semester', '4'
+put 'Student', '4', 'academic:marks', '88'
+
+put 'Student', '5', 'personal:name', 'Kabir Mehta'
+put 'Student', '5', 'personal:course', 'BCom'
+put 'Student', '5', 'academic:semester', '5'
+put 'Student', '5', 'academic:marks', '81'
+
+get 'Student', '1'
+scan 'Student'
+
+============================================================
+PRACTICAL 2 — Employee CRUD in HBase
+============================================================
+[HBase Shell]
+
+create 'Employee', 'personal', 'job'
+
+put 'Employee', 'E101', 'personal:name', 'Aarav Sharma'
+put 'Employee', 'E101', 'personal:city', 'Roorkee'
+put 'Employee', 'E101', 'job:department', 'IT'
+put 'Employee', 'E101', 'job:salary', '35000'
+
+put 'Employee', 'E102', 'personal:name', 'Priya Verma'
+put 'Employee', 'E102', 'personal:city', 'Haridwar'
+put 'Employee', 'E102', 'job:department', 'HR'
+put 'Employee', 'E102', 'job:salary', '32000'
+
+get 'Employee', 'E101'
+scan 'Employee'
+put 'Employee', 'E101', 'job:salary', '38000'
+get 'Employee', 'E101'
+delete 'Employee', 'E102', 'personal:city'
+get 'Employee', 'E102'
+
+============================================================
+PRACTICAL 3 — HBase Event Logging System
+============================================================
+[HBase Shell]
+
+create 'EventLog', 'event', 'user', 'status'
+
+put 'EventLog', 'EVT001', 'event:timestamp', '2026-10-01T09:00:00'
+put 'EventLog', 'EVT001', 'event:type', 'login'
+put 'EventLog', 'EVT001', 'user:user_id', 'U101'
+put 'EventLog', 'EVT001', 'user:user_name', 'Aarav'
+put 'EventLog', 'EVT001', 'status:result', 'success'
+
+put 'EventLog', 'EVT002', 'event:timestamp', '2026-10-01T09:05:00'
+put 'EventLog', 'EVT002', 'event:type', 'file-upload'
+put 'EventLog', 'EVT002', 'user:user_id', 'U102'
+put 'EventLog', 'EVT002', 'user:user_name', 'Priya'
+put 'EventLog', 'EVT002', 'status:result', 'success'
+
+put 'EventLog', 'EVT003', 'event:timestamp', '2026-10-01T09:10:00'
+put 'EventLog', 'EVT003', 'event:type', 'login'
+put 'EventLog', 'EVT003', 'user:user_id', 'U101'
+put 'EventLog', 'EVT003', 'user:user_name', 'Aarav'
+put 'EventLog', 'EVT003', 'status:result', 'failed'
+
+get 'EventLog', 'EVT002'
+scan 'EventLog'
+
+============================================================
+PRACTICAL 4 — Content Management System (CMS) in HBase
+============================================================
+[HBase Shell]
+
+create 'CMS', 'content', 'author', 'metadata'
+
+put 'CMS', 'C001', 'content:title', 'Introduction to NoSQL'
+put 'CMS', 'C001', 'content:body', 'Basics of NoSQL databases'
+put 'CMS', 'C001', 'author:name', 'Shreya'
+put 'CMS', 'C001', 'metadata:status', 'draft'
+put 'CMS', 'C001', 'metadata:category', 'Education'
+
+put 'CMS', 'C002', 'content:title', 'HBase Basics'
+put 'CMS', 'C002', 'content:body', 'Column-family database concepts'
+put 'CMS', 'C002', 'author:name', 'Aarav'
+put 'CMS', 'C002', 'metadata:status', 'published'
+put 'CMS', 'C002', 'metadata:category', 'Technology'
+
+get 'CMS', 'C001'
+put 'CMS', 'C001', 'metadata:status', 'published'
+get 'CMS', 'C001'
+delete 'CMS', 'C002', 'content:body'
+scan 'CMS'
+
+============================================================
+PRACTICAL 5 — Blogging Platform in HBase
+============================================================
+[HBase Shell]
+
+create 'Blog', 'details', 'author', 'comments'
+
+put 'Blog', 'B001', 'details:title', 'Learning HBase'
+put 'Blog', 'B001', 'details:body', 'My first HBase blog'
+put 'Blog', 'B001', 'author:name', 'Shreya'
+put 'Blog', 'B001', 'author:email', 'shreya@example.com'
+put 'Blog', 'B001', 'comments:C001', 'Very helpful'
+
+put 'Blog', 'B002', 'details:title', 'MongoDB vs HBase'
+put 'Blog', 'B002', 'details:body', 'A brief comparison'
+put 'Blog', 'B002', 'author:name', 'Aarav'
+put 'Blog', 'B002', 'comments:C001', 'Nice comparison'
+
+put 'Blog', 'B003', 'details:title', 'Database Design'
+put 'Blog', 'B003', 'details:body', 'Database design notes'
+put 'Blog', 'B003', 'author:name', 'Priya'
+put 'Blog', 'B003', 'comments:C001', 'Good article'
+
+get 'Blog', 'B002'
+scan 'Blog'
+
+============================================================
+PRACTICAL 6 — HBase column-family model
+============================================================
+[HBase Shell]
+
+create 'CollegeRecords', 'personal', 'academic', 'contact'
+
+put 'CollegeRecords', 'S001', 'personal:name', 'Aarav'
+put 'CollegeRecords', 'S001', 'personal:course', 'BCA'
+put 'CollegeRecords', 'S001', 'academic:semester', '5'
+put 'CollegeRecords', 'S001', 'academic:marks', '86'
+put 'CollegeRecords', 'S001', 'contact:email', 'aarav@example.com'
+put 'CollegeRecords', 'S002', 'personal:name', 'Priya'
+put 'CollegeRecords', 'S002', 'academic:marks', '91'
+put 'CollegeRecords', 'S002', 'contact:phone', '9990001111'
+
+get 'CollegeRecords', 'S001'
+scan 'CollegeRecords'
+
+# Explanation:
+# personal, academic, and contact are column families.
+# name, course, semester, marks, email, and phone are qualifiers.
+# Different rows may contain different qualifiers within a family.
+
+============================================================
+PRACTICAL 7 — WebsiteCounter increment operations
+============================================================
+[HBase Shell]
+
+create 'WebsiteCounter', 'views'
+
+# Initialize counters by incrementing from zero.
+incr 'WebsiteCounter', 'home', 'views:count', 1
+incr 'WebsiteCounter', 'home', 'views:count', 1
+incr 'WebsiteCounter', 'products', 'views:count', 1
+incr 'WebsiteCounter', 'about', 'views:count', 1
+incr 'WebsiteCounter', 'products', 'views:count', 1
+
+get_counter 'WebsiteCounter', 'home', 'views:count'
+get_counter 'WebsiteCounter', 'products', 'views:count'
+get_counter 'WebsiteCounter', 'about', 'views:count'
+scan 'WebsiteCounter'
+
+============================================================
+PRACTICAL 8 — HBase sessions with TTL
+============================================================
+[HBase Shell]
+
+# TTL is configured in seconds. This example uses 3600 seconds (1 hour).
+create 'UserSessions', {NAME => 'session', TTL => 3600}, 'user'
+
+put 'UserSessions', 'SESS001', 'session:token', 'token-abc'
+put 'UserSessions', 'SESS001', 'session:created_at', '2026-10-13T09:00:00'
+put 'UserSessions', 'SESS001', 'user:user_id', 'U101'
+
+put 'UserSessions', 'SESS002', 'session:token', 'token-def'
+put 'UserSessions', 'SESS002', 'session:created_at', '2026-10-13T09:05:00'
+put 'UserSessions', 'SESS002', 'user:user_id', 'U102'
+
+scan 'UserSessions'
+# Expired cells are removed during HBase maintenance/compaction; expiration may not be immediate.
+# To change TTL later (HBase versions that support this syntax):
+alter 'UserSessions', {NAME => 'session', TTL => 3600}
+
+============================================================
+PRACTICAL 9 — Row-key design for large-scale application
+============================================================
+[HBase Shell]
+
+create 'LargeScaleEvents', 'event', 'user'
+
+# Prefix/salted row keys can spread writes when there are many records.
+put 'LargeScaleEvents', '00_EVT001', 'event:type', 'login'
+put 'LargeScaleEvents', '01_EVT002', 'event:type', 'upload'
+put 'LargeScaleEvents', '02_EVT003', 'event:type', 'logout'
+put 'LargeScaleEvents', '03_EVT004', 'event:type', 'login'
+put 'LargeScaleEvents', '00_EVT005', 'event:type', 'purchase'
+
+put 'LargeScaleEvents', '00_EVT001', 'user:id', 'U101'
+put 'LargeScaleEvents', '01_EVT002', 'user:id', 'U102'
+put 'LargeScaleEvents', '02_EVT003', 'user:id', 'U103'
+put 'LargeScaleEvents', '03_EVT004', 'user:id', 'U104'
+put 'LargeScaleEvents', '00_EVT005', 'user:id', 'U101'
+
+scan 'LargeScaleEvents'
+# A well-designed row key can avoid write hotspots; pre-splitting and actual region
+# layout must be configured/checked in the HBase cluster.
+
+============================================================
+PRACTICAL 10 — HBase regions and RegionServers
+============================================================
+[HBase Shell]
+
+# Demonstration table with split points; requires a running multi-region HBase cluster.
+create 'RegionDemo', 'data', SPLITS => ['g', 'n', 't']
+
+put 'RegionDemo', 'a001', 'data:value', 'Region range before g'
+put 'RegionDemo', 'h001', 'data:value', 'Region range g to n'
+put 'RegionDemo', 'p001', 'data:value', 'Region range n to t'
+put 'RegionDemo', 'z001', 'data:value', 'Region range t and above'
+
+scan 'RegionDemo'
+list_regions 'RegionDemo'
+
+# RegionServers serve regions and handle reads/writes. HBase assigns regions across
+# RegionServers; verify actual placement in the HBase Web UI / admin tools.
+
+============================================================
+PRACTICAL 11 — Cassandra CollegeDB and Students
+============================================================
+[Run in cqlsh]
+
+CREATE KEYSPACE IF NOT EXISTS CollegeDB
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE CollegeDB;
+
+CREATE TABLE IF NOT EXISTS Students (
+    student_id int PRIMARY KEY,
+    name text,
+    course text,
+    semester int,
+    marks float
+);
+
+INSERT INTO Students (student_id, name, course, semester, marks) VALUES (1, 'Aarav Sharma', 'BCA', 5, 86);
+INSERT INTO Students (student_id, name, course, semester, marks) VALUES (2, 'Priya Verma', 'BCA', 5, 91);
+INSERT INTO Students (student_id, name, course, semester, marks) VALUES (3, 'Rahul Singh', 'BSc', 3, 78);
+INSERT INTO Students (student_id, name, course, semester, marks) VALUES (4, 'Neha Gupta', 'BCA', 4, 88);
+INSERT INTO Students (student_id, name, course, semester, marks) VALUES (5, 'Kabir Mehta', 'BCom', 5, 81);
+
+SELECT * FROM Students;
+
+============================================================
+PRACTICAL 12 — Cassandra Employees CRUD
+============================================================
+[Run in cqlsh]
+
+CREATE KEYSPACE IF NOT EXISTS CompanyDB
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE CompanyDB;
+
+CREATE TABLE IF NOT EXISTS Employees (
+    employee_id int PRIMARY KEY,
+    name text,
+    department text,
+    salary decimal
+);
+
+INSERT INTO Employees (employee_id, name, department, salary) VALUES (101, 'Aarav Sharma', 'IT', 35000);
+INSERT INTO Employees (employee_id, name, department, salary) VALUES (102, 'Priya Verma', 'HR', 32000);
+INSERT INTO Employees (employee_id, name, department, salary) VALUES (103, 'Rahul Singh', 'Sales', 30000);
+
+SELECT * FROM Employees;
+SELECT * FROM Employees WHERE employee_id = 101;
+UPDATE Employees SET salary = 38000 WHERE employee_id = 101;
+SELECT * FROM Employees WHERE employee_id = 101;
+DELETE FROM Employees WHERE employee_id = 103;
+SELECT * FROM Employees;
+
+============================================================
+PRACTICAL 13 — Cassandra Event Logging
+============================================================
+[Run in cqlsh]
+
+CREATE KEYSPACE IF NOT EXISTS EventDB
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE EventDB;
+
+CREATE TABLE IF NOT EXISTS UserEvents (
+    user_id text,
+    event_time timestamp,
+    event_id text,
+    event_type text,
+    status text,
+    PRIMARY KEY (user_id, event_time, event_id)
+) WITH CLUSTERING ORDER BY (event_time DESC);
+
+INSERT INTO UserEvents (user_id, event_time, event_id, event_type, status)
+VALUES ('U101', '2026-10-01 09:00:00+0000', 'EVT001', 'login', 'success');
+
+INSERT INTO UserEvents (user_id, event_time, event_id, event_type, status)
+VALUES ('U101', '2026-10-01 09:10:00+0000', 'EVT002', 'file-upload', 'success');
+
+INSERT INTO UserEvents (user_id, event_time, event_id, event_type, status)
+VALUES ('U102', '2026-10-01 10:00:00+0000', 'EVT003', 'login', 'failed');
+
+SELECT * FROM UserEvents WHERE user_id = 'U101';
+SELECT * FROM UserEvents
+WHERE user_id = 'U101'
+AND event_time >= '2026-10-01 00:00:00+0000'
+AND event_time < '2026-10-02 00:00:00+0000';
+
+============================================================
+PRACTICAL 14 — Cassandra consistency levels
+============================================================
+[Run in cqlsh on a multi-node cluster; RF must support requested level.]
+
+CREATE KEYSPACE IF NOT EXISTS ConsistencyDB
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};
+
+USE ConsistencyDB;
+
+CREATE TABLE IF NOT EXISTS ConsistencyDemo (
+    record_id int PRIMARY KEY,
+    note text
+);
+
+CONSISTENCY ONE;
+INSERT INTO ConsistencyDemo (record_id, note) VALUES (1, 'write at ONE');
+SELECT * FROM ConsistencyDemo WHERE record_id = 1;
+
+CONSISTENCY QUORUM;
+INSERT INTO ConsistencyDemo (record_id, note) VALUES (2, 'write at QUORUM');
+SELECT * FROM ConsistencyDemo WHERE record_id = 2;
+
+CONSISTENCY ALL;
+INSERT INTO ConsistencyDemo (record_id, note) VALUES (3, 'write at ALL');
+SELECT * FROM ConsistencyDemo WHERE record_id = 3;
+
+# ONE needs one replica response; QUORUM needs a majority; ALL needs all replicas.
+# With RF=3, QUORUM normally requires 2 replicas and ALL requires 3.
+# On a single-node installation with RF=3, ALL/QUORUM operations may fail.
+
+============================================================
+PRACTICAL 15 — Column-oriented application (HBase Event Logging)
+============================================================
+[HBase Shell]
+
+create 'AppEventLog', 'event', 'user', 'status'
+
+put 'AppEventLog', 'EVT001', 'event:timestamp', '2026-10-01T09:00:00'
+put 'AppEventLog', 'EVT001', 'event:type', 'login'
+put 'AppEventLog', 'EVT001', 'user:id', 'U101'
+put 'AppEventLog', 'EVT001', 'status:result', 'success'
+
+put 'AppEventLog', 'EVT002', 'event:timestamp', '2026-10-01T09:10:00'
+put 'AppEventLog', 'EVT002', 'event:type', 'file-upload'
+put 'AppEventLog', 'EVT002', 'user:id', 'U102'
+put 'AppEventLog', 'EVT002', 'status:result', 'success'
+
+get 'AppEventLog', 'EVT001'
+scan 'AppEventLog'
+
+# Update one cell
+put 'AppEventLog', 'EVT001', 'status:result', 'verified'
+get 'AppEventLog', 'EVT001'
+
+# Delete one cell
+delete 'AppEventLog', 'EVT002', 'status:result'
+get 'AppEventLog', 'EVT002'
+
+# HBase offers row-level atomic operations, sparse columns, and horizontal scaling
+# through regions/RegionServers. It does not provide general multi-row SQL-style
+# transactions. Querying is mainly by row key and scans/filters.
+# Cassandra uses partition keys and replication; consistency is tunable per operation.

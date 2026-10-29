@@ -1,0 +1,184 @@
+ASSIGNMENT – UNIT 3: NoSQL DATABASE
+Course: NoSQL Database Design
+
+Q1. Explain MongoDB as a NoSQL document-oriented database and compare its data model with traditional relational databases.
+Answer:
+MongoDB is a NoSQL document-oriented database that stores records as BSON documents in collections. A document can contain fields, nested objects, and arrays. Unlike a relational database, which stores data in tables with rows and columns and usually follows a predefined schema, MongoDB supports flexible document structures. For example, two product documents may have different fields. Relational databases are often useful for structured data and joins, while MongoDB is useful for flexible application data.
+
+Q2. Explain the key features of document-oriented databases and discuss how MongoDB implements these features.
+Answer:
+Key features of document-oriented databases include:
+1. Flexible schema: documents in the same collection can have different fields.
+2. Nested data: related information can be stored inside a document.
+3. Rich queries: fields can be filtered, sorted, and projected.
+4. Indexing: indexes can improve query performance.
+5. Horizontal scaling: MongoDB supports sharding to distribute data.
+6. Replication: replica sets provide redundant copies and high availability.
+MongoDB implements these features using BSON documents, collections, indexes, replica sets, and sharding.
+
+Q3. Explain the concept of consistency in MongoDB. Discuss how MongoDB maintains data consistency in distributed environments.
+Answer:
+Consistency means that database reads and writes follow defined rules so that users receive reliable data. MongoDB provides atomicity for a single-document write. Replica sets replicate changes from the primary to secondary members. Read concern and write concern let applications choose the required level of acknowledgment and visibility. Transactions can provide ACID guarantees across multiple documents when needed. Replication may be asynchronous, so the exact read behavior depends on read preference and consistency settings.
+
+Q4. Explain transactions in MongoDB. How does MongoDB support transactions involving multiple operations and documents?
+Answer:
+A transaction groups multiple database operations into one logical unit. MongoDB supports multi-document transactions on replica sets and sharded clusters. A transaction can read or update multiple documents and either commit all changes or abort them if an error occurs. In applications, transactions are useful when several records must remain consistent, such as updating an order and its payment status. Transactions add overhead, so single-document atomic operations or suitable document design may be preferable when possible.
+
+Q5. Discuss the availability features of MongoDB and explain how replication helps maintain high availability.
+Answer:
+MongoDB uses replica sets to maintain multiple copies of data on different members. One member acts as primary and normally accepts writes, while secondary members replicate the primary's operation log. If the primary fails, the remaining eligible members can elect a new primary. This automatic failover helps keep the service available. Replication also provides redundancy, although failover takes time and depends on cluster configuration and network conditions.
+
+Q6. Explain the query features of MongoDB with suitable examples of CRUD operations and filtering documents.
+Answer:
+MongoDB supports Create, Read, Update, and Delete (CRUD) operations. Example commands for the mongosh shell:
+
+```javascript
+use CollegeDB
+
+db.students.insertOne({
+  rollNo: 1,
+  name: "Aarav",
+  course: "BCA",
+  marks: 86
+})
+
+db.students.find()
+db.students.find({ course: "BCA" })
+db.students.find({ marks: { $gte: 80 } })
+
+db.students.updateOne(
+  { rollNo: 1 },
+  { $set: { marks: 90 } }
+)
+
+db.students.deleteOne({ rollNo: 1 })
+```
+
+`find()` reads documents, filters select matching documents, `updateOne()` changes a matching document, and `deleteOne()` removes one matching document.
+
+Q7. Explain MongoDB scaling mechanisms. Differentiate between vertical scaling and horizontal scaling with reference to MongoDB.
+Answer:
+Vertical scaling means increasing the resources of one server, such as CPU, RAM, or storage. It is simple but limited by the capacity and cost of that server.
+Horizontal scaling means adding more servers and distributing data and workload among them. MongoDB supports horizontal scaling through sharding, where a shard key determines data distribution. Vertical scaling can help a single node, while sharding can support larger datasets and higher workloads but adds operational complexity.
+
+Q8. Discuss the suitable use cases of MongoDB and explain why document databases are preferred for applications with flexible data structures.
+Answer:
+MongoDB is suitable for product catalogs, content management systems, user profiles, blogging platforms, event logging, mobile/web applications, and some analytics workloads. Document databases are useful when records have varying fields or nested structures. Developers can add new fields without redesigning every record in a rigid table structure. Data that is commonly accessed together can also be stored in one document. Schema validation can still be used when required.
+
+Q9. Explain how MongoDB can be used for event logging. Design a suitable document structure for storing application or system events.
+Answer:
+MongoDB can store each application event as a document containing the time, event type, source, user, status, and additional details. Example:
+
+```javascript
+db.events.insertOne({
+  eventId: "EVT001",
+  timestamp: new Date(),
+  eventType: "login",
+  source: "web-app",
+  user: { userId: "U101", name: "Aarav" },
+  status: "success",
+  details: { ip: "192.0.2.10", device: "laptop" }
+})
+
+db.events.find({ eventType: "login", status: "success" })
+```
+
+Indexes on timestamp, eventType, or userId can support common searches. For very large event collections, retention rules and sharding may be useful.
+
+Q10. Discuss the use of MongoDB in Content Management Systems (CMS). Explain how its document model supports dynamic and heterogeneous content.
+Answer:
+A CMS stores articles, pages, images, metadata, and other content. MongoDB can represent each item as a document with fields appropriate to that content type. An article may have a title, body, author, and tags, while a video may have a duration and caption. This flexible structure supports different content types and changing requirements. Example:
+
+```javascript
+db.content.insertOne({
+  title: "Introduction to NoSQL",
+  type: "article",
+  author: "Shreya",
+  tags: ["database", "BCA"],
+  body: "NoSQL databases support several data models."
+})
+```
+
+Q11. Explain the role of MongoDB in blogging platforms. Design a suitable MongoDB document structure for managing users, posts, comments, and tags.
+Answer:
+MongoDB can store user profiles, posts, comments, and tags. User and post records can be stored in separate collections, while small comments or tag lists may be embedded in a post when they are usually accessed together. Example:
+
+```javascript
+db.users.insertOne({
+  userId: "U101",
+  name: "Shreya",
+  email: "shreya@example.com"
+})
+
+db.posts.insertOne({
+  postId: "P101",
+  authorId: "U101",
+  title: "Learning MongoDB",
+  body: "MongoDB stores data as documents.",
+  tags: ["MongoDB", "NoSQL"],
+  comments: [
+    { userId: "U102", text: "Helpful post", date: new Date() }
+  ],
+  published: true
+})
+```
+
+For very large or frequently updated comment lists, comments may be stored in a separate collection and referenced by postId.
+
+Q12. Discuss the use of MongoDB in web analytics and real-time analytics applications. Explain how its query and scalability features support such applications.
+Answer:
+Web analytics systems collect page views, clicks, sessions, device information, and timestamps. MongoDB can store these events as documents and query them by date, page, user, or event type. Indexes help common filters, and aggregation pipelines can group events, count visits, and calculate summaries. Sharding can distribute very large datasets across servers. For near-real-time analytics, ingestion design, indexing, workload, and cluster resources affect latency.
+
+Q13. Explain how MongoDB can be used in E-Commerce applications. Discuss suitable collections for products, customers, orders, and shopping carts.
+Answer:
+MongoDB can use separate collections for products, customers, orders, and carts.
+- products: productId, name, category, price, stock, and attributes.
+- customers: customerId, name, contact details, and addresses.
+- orders: orderId, customerId, items, total, payment status, and date.
+- carts: customerId and a list of product IDs, quantities, and prices.
+Example:
+
+```javascript
+db.products.insertOne({
+  productId: "P101",
+  name: "Wireless Mouse",
+  category: "Accessories",
+  price: 500,
+  stock: 40
+})
+
+db.carts.insertOne({
+  customerId: "C101",
+  items: [{ productId: "P101", quantity: 2, price: 500 }]
+})
+
+db.orders.insertOne({
+  orderId: "O101",
+  customerId: "C101",
+  items: [{ productId: "P101", quantity: 2, price: 500 }],
+  total: 1000,
+  paymentStatus: "pending",
+  createdAt: new Date()
+})
+```
+
+Q14. Explain the challenges of handling complex transactions that span different operations in MongoDB. Discuss how MongoDB transactions can address these challenges.
+Answer:
+Complex transactions may update several documents or collections, such as creating an order, reducing stock, and recording payment. Without a transaction, a failure partway through could leave inconsistent records. MongoDB multi-document transactions allow these operations to commit together or abort together. However, transactions may increase latency and resource use, and long-running transactions can affect performance. Good schema design, short transactions, retry handling, and idempotent application logic help manage these challenges.
+
+Q15. Explain how MongoDB supports queries against varying aggregate structures. Discuss the advantages of its flexible schema with suitable examples.
+Answer:
+MongoDB queries can target fields that exist in documents even when other documents have different fields. For example:
+
+```javascript
+db.products.insertMany([
+  { name: "Laptop", price: 50000, specifications: { ram: "16GB" } },
+  { name: "Phone", price: 20000, camera: "48MP", colors: ["black", "blue"] }
+])
+
+db.products.find({ price: { $gte: 20000 } })
+db.products.find({ "specifications.ram": "16GB" })
+db.products.find({ colors: "blue" })
+```
+
+The flexible schema supports evolving requirements, nested objects, arrays, and different product types in one collection. It can reduce migration work, but applications should still validate important fields and design indexes for frequently used queries.

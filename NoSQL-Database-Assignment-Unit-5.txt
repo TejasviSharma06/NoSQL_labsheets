@@ -1,0 +1,85 @@
+ASSIGNMENT – UNIT 5: NoSQL DATABASE
+Course: BCA | Subject: NoSQL Database Design
+
+Q1. Explain the architecture and working of Riak as a Key-Value NoSQL database. Discuss how Riak stores data using keys and values and explain the major characteristics that distinguish it from relational databases.
+Answer:
+Riak is a distributed Key-Value NoSQL database. It stores each item as a value associated with a unique key inside a bucket or namespace. Applications retrieve, create, update, or delete an item by using its key. Riak distributes data across multiple nodes and uses replication to improve availability and fault tolerance. Unlike relational databases, it does not require data to be stored in fixed tables with relationships and joins. It is useful for fast lookups and distributed workloads, but complex queries generally require additional indexes or application logic.
+
+Q2. Explain the Key-Value Data Model in detail. Discuss the structure of data, key-value store features, data access mechanism, and limitations of this model. Why is a Key-Value database suitable for applications requiring fast lookups?
+Answer:
+A Key-Value database stores data as pairs: a unique key and its associated value. The value may be text, JSON, binary data, or another supported format. The key is used to locate the value directly through operations such as GET, PUT, and DELETE. Key-Value stores are simple, fast, scalable, and often support replication. Their limitations include limited querying by value contents, weak support for joins, and the need for applications to manage relationships. They are suitable for sessions, caching, preferences, and shopping carts because a known key can retrieve data quickly.
+
+Q3. Analyze the consistency model of Riak. Explain how Riak handles consistency in a distributed environment and discuss the trade-off between consistency, availability, and partition tolerance with a suitable example.
+Answer:
+Riak is designed for distributed availability and supports tunable consistency behavior. Data can be replicated across nodes, and read/write quorum settings determine how many replicas must participate in an operation. During network partitions, a system may prioritize serving requests even if replicas temporarily disagree. This can improve availability but may result in conflicting or stale values that need reconciliation. For example, if a user profile is updated while two nodes cannot communicate, both sides may accept updates. When communication returns, conflict resolution or application-level merging may be needed. The appropriate settings depend on whether availability or the freshest consistent value is more important.
+
+Q4. Discuss transactions and multi-operation transactions in Riak. Why are traditional relational-style transactions difficult to implement in distributed Key-Value databases? Explain the possible approaches for maintaining data correctness across multiple operations.
+Answer:
+Traditional relational transactions often provide ACID guarantees across many rows and tables. In a distributed Key-Value database, data may be replicated across nodes, so coordinating multiple operations can increase latency and reduce availability during failures. Riak's basic model focuses on operations on individual keys rather than general relational-style multi-key transactions. Applications can maintain correctness by designing values so related information is stored together, using conditional updates where supported, making operations idempotent, validating state before changes, and implementing compensating actions or a saga pattern for multi-step workflows. Critical workflows should explicitly handle retries, partial failures, and conflicts.
+
+Q5. Explain the query features of Riak. How does querying by data differ from querying by key? Discuss how Riak can support searching, secondary indexes, and data retrieval when the application requirements become more complex.
+Answer:
+Querying by key retrieves an item directly when its key is known. Querying by data means searching for records based on fields inside values, which is more difficult in a simple Key-Value model. Riak can support additional query methods through secondary indexes and search capabilities, depending on the Riak version and configuration. For example, an application may index a userId or status field to find records without knowing each key. Indexes can add storage and update overhead, so common queries should be planned in advance. For complex relationships or ad hoc analysis, a search engine or another database may be more appropriate.
+
+Q6. A web application needs to store millions of user sessions where each session contains user ID, login time, device information, and session expiry information. Explain how Riak can be used to store session information and discuss the advantages of using a Key-Value database for this application.
+Answer:
+Use the session ID as the key and store the session details as the value. Example conceptual value:
+Key: session:S101
+Value: { userId: "U101", loginTime: "2026-10-13T09:00:00", device: "laptop", expiresAt: "2026-10-14T09:00:00" }
+When a user logs in, the application writes the session. On later requests, it retrieves the value using the session ID. On logout, it deletes the key. A Key-Value store supports fast lookups, distributed storage, replication, and high request volume. Expiry can be handled with supported expiration features or application cleanup logic. The application should validate expiry and protect session data.
+
+Q7. An e-commerce application needs to maintain user profiles, preferences, and shopping cart data. Design a conceptual Key-Value data structure for these requirements and explain how the data can be efficiently accessed and updated.
+Answer:
+Possible keys and values:
+- user:U101 → {name: "Shreya", email: "shreya@example.com"}
+- preferences:U101 → {language: "English", notifications: true}
+- cart:U101 → {items: [{productId: "P10", quantity: 2}, {productId: "P20", quantity: 1}]}
+The application retrieves each value using its key. Profile and preference updates replace or update the relevant value. Cart operations read the cart, change an item quantity, and save the updated value. Where supported, conditional writes or version checks can prevent concurrent updates from overwriting one another. Store related data together when it is usually accessed together, and validate prices and stock against the authoritative product/order system.
+
+Q8. Explain relationships among data in Key-Value databases. Why are relationships more difficult to represent in a simple Key-Value model than in a relational or graph database? Discuss suitable techniques for handling related data.
+Answer:
+A simple Key-Value database identifies values by keys and does not normally provide automatic joins or relationship traversal. Related information may be stored in one value, referenced by IDs in other values, or duplicated for faster access. For example, an order value can contain a customer ID and product IDs. The application then retrieves the related records separately. Embedding is useful for small data accessed together, while references reduce duplication. Applications must handle consistency when related records change. If the main requirement is to explore many relationships, a relational or graph database may be more suitable.
+
+Q9. Explain scaling in Riak. Discuss how distributed Key-Value databases handle increasing data volume and user requests. Explain the role of partitioning, replication, and distributed nodes in achieving scalability and fault tolerance.
+Answer:
+Riak distributes keys and values across multiple nodes using partitioning. Each node stores part of the data, allowing the system to grow by adding capacity. Replication stores copies on multiple nodes so data can remain available when a node fails. Requests can be served by appropriate nodes, distributing the workload. Partitioning increases capacity and load distribution, while replication improves resilience but uses additional storage and network traffic. Good monitoring, balanced data distribution, suitable replication settings, and recovery procedures are important as the system grows.
+
+Q10. Explain the concept of Operations by Sets in Key-Value databases. Discuss why set-based operations can be useful for applications such as user groups, tags, product categories, and social relationships. Give suitable examples.
+Answer:
+A set stores a collection of unique values. Set-based operations include adding an item, removing an item, checking membership, and finding union or intersection. For example, a conceptual value might be:
+Key: group:students
+Value: {"U101", "U102", "U103"}
+Adding a user adds their ID to the set; removing a user deletes it. For tags, a product may be associated with {"electronics", "accessories"}. Intersection can find users belonging to two groups, while union can combine categories. A simple Key-Value store may not perform all set operations natively, so the application or supported data structures must implement them safely, especially when concurrent updates occur.
+
+Q11. Explain Graph Databases and their data model. Discuss the concepts of nodes, relationships/edges, properties, and labels and explain why graph databases such as Neo4j are particularly suitable for highly connected data.
+Answer:
+A graph database represents information as nodes and relationships. Nodes represent entities such as people, products, or places. Relationships connect nodes and have a type, such as FRIEND_OF or PURCHASED. Nodes and relationships can both contain properties, such as a person's name or a purchase date. Labels classify nodes, for example Person or Product. Neo4j is suitable for highly connected data because relationships are stored explicitly and can be traversed directly. This is useful for social networks, recommendation systems, fraud detection, and route finding.
+
+Q12. Explain the major features of Neo4j as a Graph NoSQL database. Discuss its consistency, transactions, availability, query capabilities, and scaling mechanisms. Compare its approach with that of a traditional relational database.
+Answer:
+Neo4j stores nodes, relationships, labels, and properties and uses Cypher, a declarative graph query language. It supports ACID transactions for data modifications, subject to its edition and deployment configuration. Neo4j offers clustering and replication options for availability in supported deployments, while scaling options depend on product edition and architecture. A relational database stores data in tables and commonly uses joins to connect related records. Neo4j represents relationships directly, which can make multi-hop relationship queries clearer and more efficient. Relational databases may be preferable for highly tabular data and workloads centered on standard SQL joins and reporting.
+
+Q13. Explain graph database query processing using Neo4j. Discuss how graph traversal and pattern-based queries can be used to find relationships among data. Why can graph-based querying be more effective than relational joins for highly connected datasets?
+Answer:
+Neo4j uses Cypher to describe graph patterns. A query can match nodes and relationships and traverse multiple hops. Example:
+MATCH (a:Person)-[:FRIEND_OF]->(b:Person)
+RETURN a.name, b.name;
+A recommendation-style query could find friends of friends:
+MATCH (u:Person {name: "Shreya"})-[:FRIEND_OF]->(:Person)-[:FRIEND_OF]->(suggestion:Person)
+RETURN DISTINCT suggestion.name;
+Graph traversal follows stored relationships rather than repeatedly joining separate tables. This can be convenient for highly connected data and multi-hop queries. Query performance still depends on indexes, graph structure, data volume, and query design.
+
+Q14. A social networking application needs to represent users, friendships, followers, posts, likes, groups, and recommendations. Explain how you would model this application using Neo4j. Discuss the advantages of using a graph database for relationship-based queries.
+Answer:
+Represent each user as a :User node with properties such as userId and name. Represent posts as :Post nodes and groups as :Group nodes. Use relationships such as (User)-[:FOLLOWS]->(User), (User)-[:FRIEND_OF]->(User), (User)-[:WROTE]->(Post), (User)-[:LIKED]->(Post), and (User)-[:MEMBER_OF]->(Group). Relationships may include timestamps or other properties.
+Recommendations can be generated by finding users followed by friends, posts liked by similar users, or groups shared by connected users. Neo4j makes these paths explicit and supports pattern-based traversal, which is useful for recommendations and network analysis. Access controls and privacy rules must still be enforced by the application.
+
+Q15. Compare Riak Key-Value databases and Neo4j Graph databases with respect to data structure, consistency, transactions, availability, query features, relationships, scalability, and suitable use cases. Based on these characteristics, recommend which database would be more appropriate for a shopping-cart system, user-profile system, and social-network recommendation system, with proper justification.
+Answer:
+Riak stores values accessed by keys and is well suited to fast lookups, distributed storage, sessions, preferences, and shopping carts. It emphasizes distribution and availability, with consistency behavior depending on configuration and supported features. Complex value-based queries and relationships usually require extra indexes or application logic.
+Neo4j stores nodes and explicit relationships. It supports Cypher pattern queries and ACID transactions, making it well suited to highly connected data such as social networks and recommendation paths. Its deployment and scaling choices differ from a simple distributed Key-Value store.
+Recommendations:
+- Shopping cart: Riak or another suitable Key-Value store can be effective because a cart can be retrieved by user/cart key. Ensure safe concurrent updates and checkout validation.
+- User profiles: Riak is suitable when profiles are retrieved by a known user ID and require fast lookups.
+- Social-network recommendations: Neo4j is more appropriate because users, friendships, follows, likes, and interests form a graph that benefits from traversal queries.
+The final choice should also consider operational support, consistency needs, query patterns, and the specific product/version.

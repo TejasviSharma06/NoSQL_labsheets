@@ -1,0 +1,126 @@
+ASSIGNMENT – UNIT 2: NoSQL DATABASE
+Course: NoSQL Database Design
+
+Q1. Compare Relational Databases (RDBMS) and NoSQL Databases with respect to schema, scalability, data model, consistency, performance, and applications. Give suitable examples.
+Answer:
+RDBMS stores data in tables with rows and columns and generally uses a predefined schema. It commonly supports SQL, joins, and ACID transactions. Scaling is often vertical, although some RDBMS systems also support distributed scaling. It is suitable for banking, payroll, and structured business records. Examples include MySQL and PostgreSQL.
+NoSQL databases use models such as key-value, document, column-family, and graph. Many support flexible schemas and horizontal scaling across servers. Their consistency and transaction features depend on the database and configuration. They can perform well for large, distributed, rapidly changing workloads. Examples include MongoDB, Cassandra, HBase, and Neo4j.
+
+Q2. Explain the following NoSQL databases and their major use cases.
+Answer:
+a) MongoDB: A document database that stores data in BSON documents. It supports flexible document structures and queries. Uses include product catalogs, content management, and application data.
+b) Apache Cassandra: A distributed column-family database designed for high availability and large write workloads. Uses include event logging, time-series data, and large-scale services.
+c) Apache HBase: A distributed column-family database built on Hadoop/HDFS, suitable for large sparse tables and random read/write access. Uses include large datasets and event records.
+d) Neo4j: A graph database that stores entities as nodes and relationships as edges. Uses include social networks, fraud detection, and recommendation systems.
+
+Q3. Explain the RDBMS approach and discuss the major challenges faced by traditional relational databases when handling large-scale, distributed, and rapidly changing data.
+Answer:
+The RDBMS approach organizes data into related tables with predefined schemas. Primary keys and foreign keys define relationships, and SQL is used to query and update records. Transactions typically follow ACID properties.
+Challenges at very large scale can include expensive vertical scaling, complex horizontal partitioning, schema changes that require migrations, and overhead from joins across distributed data. Maintaining strong consistency across multiple locations can also add latency. These are workload-dependent challenges; modern relational systems can address many of them.
+
+Q4. What is the NoSQL approach? Explain how NoSQL databases address the scalability, flexibility, and performance limitations of traditional RDBMS.
+Answer:
+The NoSQL approach uses non-relational data models to match different application needs. Many NoSQL databases allow flexible records, distribute data across multiple servers, and replicate data for availability. Key-value stores support fast lookups, document stores support varied records, column-family stores handle large distributed datasets, and graph databases efficiently represent relationships. These features can improve scalability and performance for suitable workloads, although design choices affect consistency and query capabilities.
+
+Q5. Explain the following NoSQL data models with suitable examples.
+Answer:
+a) Key-Value Model: Stores each value under a unique key. Example: Riak or Redis for caching and sessions.
+b) Document Model: Stores records as documents, often JSON-like. Example: MongoDB for product catalogs.
+c) Column-Family Model: Stores data in rows organized into column families. Examples: Cassandra and HBase for distributed event data.
+d) Graph Model: Stores entities as nodes and relationships as edges. Example: Neo4j for social networks and recommendations.
+
+Q6. What are Aggregate-Oriented Databases? Explain the concept of aggregates and discuss how they are useful in NoSQL database design.
+Answer:
+Aggregate-oriented databases store related data together as a unit called an aggregate. An aggregate may contain a customer record and its address, or an order and its items. Key-value, document, and column-family databases commonly use aggregate-oriented design ideas.
+Aggregates can make common reads and writes simpler because related data is retrieved together. They can also help distribute data by aggregate key. However, very large aggregates and frequent updates to shared data can create performance or consistency challenges.
+
+Q7. Differentiate between MongoDB's Document Model and Cassandra's Column-Family Model. Give one suitable application for each.
+Answer:
+MongoDB stores data as flexible BSON documents, which can contain nested objects and arrays. It supports document-oriented queries and is suitable for content management or product catalogs.
+Cassandra organizes data into tables with partition keys and clustering columns, using a distributed wide-column model. Table design is query-driven and is suited to high-volume writes and availability. A suitable application is event logging or time-series tracking.
+
+Q8. Explain Replication and Sharding in NoSQL databases. Why are these techniques important for distributed database systems?
+Answer:
+Replication keeps copies of data on multiple nodes. It improves availability and can support read scaling and recovery if a node fails.
+Sharding divides a dataset into partitions and stores different partitions on different servers. It distributes storage and workload, allowing horizontal scaling.
+Together, replication and sharding help a database handle larger datasets and node failures. They also introduce challenges such as replica consistency, shard balancing, and more complex operations.
+
+Q9. Explain the following distribution models with suitable diagrams.
+Answer:
+a) Single Server:
+    Users
+      |
+    [One Database Server]
+      |
+    [Data]
+All data and requests are handled by one server. It is simple to manage but may become a bottleneck and a single point of failure.
+
+b) Sharding:
+       [Application]
+            |
+       [Shard Router]
+        /    |    \
+   [Shard 1][Shard 2][Shard 3]
+Each shard stores a different portion of the data, distributing storage and requests across servers.
+
+c) Master-Slave Replication:
+          [Application]
+               |
+           [Master]
+           /      \
+     [Replica 1] [Replica 2]
+Writes are typically sent to the master and copied to replicas. Replicas may serve reads depending on the system.
+
+d) Peer-to-Peer Replication:
+       [Node A] <----> [Node B]
+          ^              ^
+          |              |
+          v              v
+       [Node C] <----> [Node D]
+Nodes can accept operations and exchange updates with peers. Conflict handling and consistency depend on the system.
+
+Q10. What is Master-Slave Replication? Explain its working, advantages, limitations, and suitable applications.
+Answer:
+Master-slave replication uses one primary/master node to accept writes and one or more replica/slave nodes to receive copies of the data. The master propagates changes to replicas, which may serve read requests.
+Advantages include centralized write handling, read scaling, and additional copies for recovery. Limitations include a possible master bottleneck, failover complexity, and replication lag. It is suitable for applications with many reads, such as content websites and reporting systems.
+
+Q11. Explain Peer-to-Peer Replication. How is it different from Master-Slave Replication?
+Answer:
+Peer-to-peer replication allows multiple nodes to accept updates and exchange data with each other. It can distribute workload and avoid relying on a single write master.
+In master-slave replication, writes normally go through one master and replicas follow it. In peer-to-peer systems, multiple nodes may accept writes, so conflict resolution and consistency become important. Peer-to-peer designs can improve availability but are more complex to coordinate.
+
+Q12. What is Sharding? Explain how data is distributed across multiple servers. Discuss its advantages and challenges.
+Answer:
+Sharding divides a database into smaller partitions called shards. A shard key determines which server stores each record. For example, customer IDs 1–1000 might be stored on Shard 1 and IDs 1001–2000 on Shard 2.
+Advantages include horizontal scaling, distribution of storage, and increased parallel processing. Challenges include choosing a good shard key, avoiding hotspots, rebalancing data, and handling queries that span multiple shards.
+
+Q13. Explain how Sharding and Replication can be combined in a distributed NoSQL database. Draw a suitable architecture diagram and explain its working.
+Answer:
+Sharding divides data into separate partitions, while replication keeps copies of each partition for availability.
+
+              [Application]
+                   |
+               [Router]
+             /           \
+        [Shard A]       [Shard B]
+         /    \          /    \
+     [A-P]   [A-R]    [B-P]   [B-R]
+     Primary Replica  Primary Replica
+
+The router directs each request to the shard that owns the relevant data. Each shard has a primary and one or more replicas. Updates are replicated according to the database's replication policy. This architecture distributes load while maintaining copies for failover. Exact behavior depends on the database system.
+
+Q14. What is MapReduce? Explain the Map and Reduce phases with a simple example of processing database records.
+Answer:
+MapReduce is a distributed programming model for processing large datasets.
+Map phase: Each input record is processed and emits intermediate key-value pairs.
+Reduce phase: Values with the same key are grouped and combined into a final result.
+Example: Count purchases by category.
+Input records: (Books, 2), (Food, 1), (Books, 3)
+Map output: (Books, 2), (Food, 1), (Books, 3)
+Reduce output: (Books, 5), (Food, 1)
+The map tasks can run in parallel, and reduce tasks combine the partial results.
+
+Q15. Explain the role of MapReduce in database processing. Discuss how it can be used for large-scale data analysis.
+Answer:
+MapReduce divides a large processing job into smaller map tasks that run across data partitions, followed by reduce tasks that combine intermediate results. It supports parallel processing and can process data distributed across many machines.
+It is useful for batch analysis such as counting events, summarizing sales, analyzing logs, and calculating statistics over large datasets. Its limitations include processing overhead and higher latency than interactive queries, so it is generally best for large batch workloads rather than low-latency applications.
